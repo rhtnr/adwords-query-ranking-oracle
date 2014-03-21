@@ -101,3 +101,5 @@ advertiser who bid the query . If the advertiser’s bid itself is the smallest,
 price it bids in this case. It has been shown that second-price auctions are less susceptible
 to being gamed by advertisers than first-price auctions and lead to higher revenues for the
 search engine
+
+main execution file- adwords.java
