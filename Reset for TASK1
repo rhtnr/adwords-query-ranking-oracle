@@ -1,0 +1,10 @@
+delete from bidders;
+delete from querytokens;
+delete from task1ads;
+drop table budget;
+drop table qualityscores;
+create table qualityscores(qu integer, ai integer, qs float);
+create table budget as (select advertiserid, budget as BUDGET_GR1, budget as BUDGET_GR2, budget as BUDGET_BA1, budget as BUDGET_BA2, budget as BUDGET_GE1, budget as BUDGET_GE2 from advertisers);
+alter table budget add (adcount1 number, adcount2 number, adcount3 number, adcount4 number, adcount5 number, adcount6 number);
+update budget set adcount1=0, adcount2 = 0, adcount3 = 0, adcount4 = 0, adcount5 = 0, adcount6 = 0;
+commit;

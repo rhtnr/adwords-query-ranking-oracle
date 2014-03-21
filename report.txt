@@ -1,0 +1,43 @@
+******
+REPORT
+******
+
+Name: Rohit Kesavan Nair
+UFID: 4698 - 3602
+
+
+Development Steps:
+------------------
+
+First the queries are taken one by one according to the queryid. Then the query is tokenised using sql and then stored in a table for retrieval and joins later on.
+Then for each query the tokens are joined with the keywords table such that we get the advertisers who have greater than or equal budget of their sum of the bid. 
+It can also be noted that the sum of their bids is greatest in the first priority algorithm. So you don't need to check if they have budget of the 2nd highest bidder 
+in the 2nd priority algorithm. The bidders thus selected are saved in a temporary bidders table.
+Next step was to retrieve the topk bidders from the temporary bidders table and store the updated times their ad is displayed in another temporary table and reduce 
+their remaining budget according to the task number and save the topk ads in an output table.
+FInally using JAVA the output table rows are retrieved and printed.
+I have used plsql functions for each of the six tasks and a main tester function to call each of these functions.
+
+Problems faced
+--------------
+
+The first problem faced was tokenising the query. I could easily have been tokenised using a function. But a much simpler way to tokenise a query was available using 
+oracle keywords within a sql query which returns tuples of the tokens.
+Since the bidders returned multiple advertisers, cursors had to used to process all one by one. Care was taken to avoid any logic that opened a cursor inside another 
+cursor for loop which might have vastly increased the time complexity.
+It was also noted that updated the budget after each ad display was not the ideal way to do it. Therefore the budget of each task was put into separate tables. 
+I had tried to avoid data redundancy, but the logic used was throwing deadlock problems, therefore I had to use some redundant data splitting into multiple tables to keep track of adcount and budgets for each advertiser.
+The logic followed was such that the 2nd priority function was made with only 2-3 line changes to the first priority functions I had developed.
+The quality score is also found once for each query bidder and stored for the rest of the tasks.
+
+
+Takeaways from the Project
+--------------------------
+
+New oracle keywords were learnt with query tokenising. The importance of time efficiency is understood after handling a very large number of queries 
+and advertisers. This project also gave an general basic insight into online advertising.
+
+Please Note: The sample output shows trailing ZEROES truncated for example in the sample output the numbers are .92, 0.7, .5 etc. But in my output 
+the corresponding number would be 0.92, 0.70, 0.50. There the autograding script might fail to see that the numbers are the same. Please have a look.
+
+EOF

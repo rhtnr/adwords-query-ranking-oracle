@@ -1,0 +1,73 @@
+CREATE OR REPLACE FUNCTION TASK32(q in number, topk in number)
+RETURN NUMBER
+IS
+PRAGMA AUTONOMOUS_TRANSACTION;
+
+i_temp number;
+i_temp2 float;
+i_temp3 float;
+i_ctc number;
+i_modadcount number;
+secbidder number;
+cursor ctokens(id QUERIES.qid%type) is
+     select word, count(word) as tcount from (with t as (select query as txt from queries where qid=id) select REGEXP_SUBSTR (txt, '[^[:space:]]+', 1, level) as word from t connect by level <= length(regexp_replace(txt,'[^[:space:]]+'))+1) where word !=' ' group by word;
+
+BEGIN
+--split query into tokens
+select count(*) into i_temp from QUERYTOKENS where QUERYTOKENS.qid=q;
+if i_temp = 0 then
+      FOR tokens in ctokens(q)
+      LOOP
+          select count(*) into i_temp from QUERYTOKENS where QUERYTOKENS.qid=q and QUERYTOKENS.token=tokens.word;
+          IF i_temp = 0
+          then
+            INSERT INTO QUERYTOKENS(QID,TOKEN, tcount)  VALUES(q,tokens.word, tokens.tcount);
+            commit;
+            end if;
+      END LOOP;
+  commit;
+end if;
+
+
+--JOIN TOKENS with KEYWORDS
+delete from bidders;
+commit;
+      FOR ADS IN (select k.advertiserid, sum(bid) as bidsum from keywords k, querytokens q
+      where lower(q.token)=lower(k.keyword) and
+      q.qid=q
+      group by k.advertiserid having sum(bid)<=(select BUDGET_GE2 from budget where advertiserid=k.advertiserid))
+      LOOP
+        INSERT INTO BIDDERS(queryid, advertiserid, bidsum, qualityscore) VALUES (q, ADS.advertiserid, ADS.bidsum, qualityscore(q,ADS.advertiserid));
+        commit;
+    END LOOP;
+
+
+--select final bidders
+FOR ADS IN (select rownum, queryid, advertiserid, bidsum, qualityscore from (SELECT * from BIDDERS WHERE queryid=q order by(((BIDDERS.bidsum*(1-POWER(2.71828,(-(select BUDGET_GE2 from budget where budget.advertiserid=BIDDERS.advertiserid)/(select advertisers.budget from advertisers where advertisers.advertiserid=bidders.advertiserid))))))*qualityscore) desc, ADVERTISERID) bidders2 where rownum<=topk order by rownum)
+LOOP
+  select ctc*100 into i_ctc from advertisers where advertiserid=ads.advertiserid;
+  SELECT adcount6 into i_modadcount from adcount where advertiserid=ads.advertiserid;
+   update adcount set adcount6=adcount6+1 where advertiserid=ads.advertiserid;
+  IF  (((MOD(i_modadcount,100)) >= 0) and ((MOD(i_modadcount,100)) < i_ctc))
+  THEN
+    secbidder:=-1;
+    select max(distinct bidsum) into secbidder from bidders where bidsum<(select bidsum from bidders where queryid=q and advertiserid=ads.advertiserid);
+    if (secbidder=-1) or secbidder is null then
+      update budget set BUDGET_GE2=BUDGET_GE2 - ADS.bidsum where advertiserid=ads.advertiserid;
+    else
+      update budget set BUDGET_GE2=BUDGET_GE2 - secbidder where advertiserid=ads.advertiserid;
+     end if;
+    commit;
+   END IF;
+   select BUDGET_GE2 into i_temp3 from budget where advertiserid=ads.advertiserid;
+   select budget into i_temp2 from advertisers where advertiserid=ads.advertiserid;
+   --CREATE TABLE TASK1ADS (QID INTEGER, RANK INTEGER, ADVERTISERID INTEGER, BALANCE FLOAT, BUDGET FLOAT);
+   INSERT INTO TASK32ADS(qid, rank, advertiserid, balance, budget1) values(ADS.queryid, ads.rownum, ads.advertiserid, i_temp3, i_temp2 );-- , itemp2);
+   commit;
+END LOOP;
+
+
+commit;
+return 0;
+END;
+/

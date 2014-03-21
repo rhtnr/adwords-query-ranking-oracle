@@ -1,0 +1,38 @@
+CREATE OR REPLACE FUNCTION qualityscore(qid IN NUMBER,aid IN NUMBER)
+RETURN FLOAT
+IS
+i_temp number;
+i_temp2 number;
+ascalar number;
+bscalar number;
+scalar number;
+asq number;
+bsq number;
+i_ctc number;
+present number;
+qspresent number;
+BEGIN
+present:=0;
+select count(*) into present from qualityscores where qu=qid and ai=aid;
+if present = 1
+then
+  select qs into qspresent from qualityscores where qu=qid and ai=aid;
+  return qspresent;
+end if;
+scalar:=0;
+asq:=0;
+bsq:=0;
+i_temp:=qid;
+FOR tokenset in (select * from querytokens where qid=i_temp)
+LOOP
+  ascalar:=tokenset.tcount;
+  select count(keyword) into bscalar from keywords a where a.advertiserid=aid and keyword=tokenset.token;
+  scalar:=scalar + (ascalar * bscalar);
+END LOOP;
+select sum(tcount*tcount) into asq from querytokens where qid=i_temp;
+select count(keyword) into bsq from keywords a where a.advertiserid=aid;
+i_temp2:=scalar/((sqrt(asq))*(sqrt(bsq)));
+select ctc into i_ctc from advertisers a where a.advertiserid=aid;
+RETURN i_ctc*i_temp2;
+END;
+/

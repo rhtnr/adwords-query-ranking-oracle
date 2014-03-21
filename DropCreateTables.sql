@@ -1,0 +1,14 @@
+drop table queries;
+drop table keywords;
+drop table advertisers;
+drop table QUERYTOKENS;
+drop table bidders;
+drop table qualityscores;
+create table queries(qid integer primary key, query varchar(400));
+create table advertisers(advertiserid integer primary key, budget float, ctc float);
+create table keywords(advertiserid integer, keyword varchar(100), bid float, primary key(advertiserid, keyword),foreign key(advertiserid) references advertisers(advertiserid));
+CREATE TABLE QUERYTOKENS (QID INTEGER, TOKEN VARCHAR(400), TCOUNT NUMBER);
+CREATE TABLE BIDDERS(queryid NUMBER, advertiserid NUMBER, bidsum NUMBER, qualityscore FLOAT);
+create table qualityscores(qu integer, ai integer, qs float);
+commit;
+exit;
